@@ -2,10 +2,10 @@
 
 **Pragma > Dogma.**
 
-This package slightly bends the reality of Dependency Inversion Principle,
-to give a pragmatic edge to your codebase:
+Allow to pragmatically adopt DDD principles in Laravel and Eloquent without the overhead of writing and maintaining a separate entity class for each model.
 
-> Eloquent ain't going anywhere. A lot of domain-entity logic could live in there.
+This package slightly bends the reality of Dependency Inversion Principle,
+to give that pragmatic edge to your codebase.
 
 ## The idea
 
