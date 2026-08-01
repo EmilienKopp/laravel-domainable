@@ -13,12 +13,6 @@ parameters:
 			path: src/Concerns/IsEntity.php
 
 		-
-			message: '#^Instanceof between Splitstack\\Domainable\\Contracts\\EnforcesInvariants and Splitstack\\Domainable\\Contracts\\EnforcesInvariants will always evaluate to true\.$#'
-			identifier: instanceof.alwaysTrue
-			count: 1
-			path: src/Data/Invariant.php
-
-		-
 			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model&Splitstack\\Domainable\\Contracts\\ProvidesEntity\:\:create\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -27,12 +21,6 @@ parameters:
 		-
 			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model&Splitstack\\Domainable\\Contracts\\ProvidesEntity\:\:find\(\)\.$#'
 			identifier: method.notFound
-			count: 1
-			path: src/Repository/BaseRepository.php
-
-		-
-			message: '#^Instanceof between Illuminate\\Database\\Eloquent\\Model and Illuminate\\Database\\Eloquent\\Model will always evaluate to true\.$#'
-			identifier: instanceof.alwaysTrue
 			count: 1
 			path: src/Repository/BaseRepository.php
 
