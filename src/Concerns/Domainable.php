@@ -21,12 +21,22 @@ trait Domainable
 {
     use IsEntity;
 
-    public function asEntity(): Entity
+    /**
+     * @param  bool  $assertInvariants  when false, skip the invariant check on
+     *                                   hydration. The escape hatch for loading
+     *                                   an entity known to be in an invalid
+     *                                   state (inspection, repair). Later domain
+     *                                   calls still assert.
+     */
+    public function asEntity(bool $assertInvariants = true): Entity
     {
         $meta = EntityReflector::scan($this);
 
         $entity = new Entity($this, $meta['domain']);
-        $entity->assertInvariants();
+
+        if ($assertInvariants) {
+            $entity->assertInvariants();
+        }
 
         return $entity;
     }

@@ -6,5 +6,5 @@ use Splitstack\Domainable\Entity;
 
 interface ProvidesEntity extends EnforcesInvariants
 {
-    public function asEntity(): Entity;
+    public function asEntity(bool $assertInvariants = true): Entity;
 }

@@ -42,6 +42,23 @@ test('fetching corrupted data (invariants violated in DB) throws an exception', 
     $repository->find($model->id);
 })->throws(InvariantViolationException::class, 'Invariant [nameIsLongEnough] violated: Invariant failed');
 
+test('fetchUnsafe loads an entity that violates a strict invariant instead of throwing', function () {
+    $model = ExampleModel::create(['name' => 'Test']); // Violates the "nameIsLongEnough" invariant
+
+    $repository = new class extends BaseRepository
+    {
+        protected string $for = ExampleModel::class;
+    };
+
+    $entity = $repository->find($model->id, fetchUnsafe: true);
+
+    expect($entity)->toBeInstanceOf(Entity::class)
+        ->and($entity->name)->toBe('Test');
+
+    // The escape hatch only skips the hydration check; a later domain call still asserts.
+    expect(fn () => $entity->rename('X'))->toThrow(InvariantViolationException::class);
+});
+
 test('Base repository quarantines entities that violate invariants', function () {
     ModelWithQuarantine::create(['name' => 'Test']); // corrupted data
     ModelWithQuarantine::create(['name' => 'ValidName']); // valid data

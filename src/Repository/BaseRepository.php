@@ -32,12 +32,17 @@ class BaseRepository
         $this->model = new $this->for;
     }
 
-    public function find(int|string $id, bool $nullIfQuarantined = false): ?Entity
+    /**
+     * @param  bool  $fetchUnsafe  skip the invariant check on hydration so an
+     *                             entity in an invalid state loads instead of
+     *                             throwing. For inspection or repair only.
+     */
+    public function find(int|string $id, bool $nullIfQuarantined = false, bool $fetchUnsafe = false): ?Entity
     {
         /** @var Model&ProvidesEntity|null $model */
         $model = $this->model->find($id);
 
-        $entity = $model?->asEntity();
+        $entity = $model?->asEntity(assertInvariants: ! $fetchUnsafe);
 
         if ($nullIfQuarantined && $entity?->isQuarantined()) {
             return null;
