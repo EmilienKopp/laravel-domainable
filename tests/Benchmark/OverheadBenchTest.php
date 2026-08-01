@@ -2,7 +2,6 @@
 
 namespace Splitstack\Domainable\Tests\Benchmark;
 
-use Splitstack\Domainable\Repository\BaseRepository;
 use Splitstack\Domainable\Tests\Fixtures\ExampleModel;
 use Splitstack\Domainable\Tests\Fixtures\ProxyOnlyModel;
 
