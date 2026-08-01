@@ -17,7 +17,8 @@
   "scripts": {
     "lint": "vendor/bin/pint --parallel",
     "type": "vendor/bin/phpstan analyse --memory-limit=2G",
-    "test": "vendor/bin/pest --parallel --colors=always"
+    "test": "vendor/bin/pest --parallel --colors=always --exclude-group=benchmark",
+    "bench": "vendor/bin/pest --group=benchmark --colors=always"
   },
   "autoload-dev": {
     "psr-4": {

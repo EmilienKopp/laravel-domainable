@@ -17,6 +17,10 @@ use Splitstack\Domainable\Tests\TestCase;
 pest()->extend(TestCase::class)
     ->in('Unit');
 
+pest()->extend(TestCase::class)
+    ->group('benchmark')
+    ->in('Benchmark');
+
 pest()->extend(CommandTestCase::class)
     ->in('Feature');
 
