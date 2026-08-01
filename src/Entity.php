@@ -4,9 +4,10 @@ namespace Splitstack\Domainable;
 
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Model;
+use Splitstack\Domainable\Contracts\EnforcesInvariants;
 use Splitstack\Domainable\Contracts\ProvidesEntity;
 
-final class Entity
+final class Entity implements EnforcesInvariants
 {
     private const ALLOWED_METHODS = ['clone'];
 
@@ -57,6 +58,11 @@ final class Entity
     public function isQuarantined(): bool
     {
         return $this->model->isQuarantined();
+    }
+
+    public function quarantine(string $reason): void
+    {
+        $this->model->quarantine($reason);
     }
 
     public function toModel(): Model

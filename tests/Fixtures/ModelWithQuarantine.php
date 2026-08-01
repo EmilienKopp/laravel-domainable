@@ -38,4 +38,9 @@ class ModelWithQuarantine extends Model implements ProvidesEntity
             policy: HydrationPolicy::Quarantine
         );
     }
+
+    public static function violating()
+    {
+        return new self(['name' => 'short']);
+    }
 }

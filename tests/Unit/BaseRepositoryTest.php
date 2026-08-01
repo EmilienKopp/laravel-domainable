@@ -6,6 +6,7 @@ use Splitstack\Domainable\Entity;
 use Splitstack\Domainable\Exceptions\InvariantViolationException;
 use Splitstack\Domainable\Repository\BaseRepository;
 use Splitstack\Domainable\Tests\Fixtures\ExampleModel;
+use Splitstack\Domainable\Tests\Fixtures\ModelWithoutProvidesEntity;
 use Splitstack\Domainable\Tests\Fixtures\ModelWithQuarantine;
 
 test('BaseRepository can find an entity by ID', function () {
@@ -89,4 +90,54 @@ test('it can save an entity', function () {
     expect($fetchedEntity)->not()->toBeNull()
         ->and($fetchedEntity->name)->toBe('NewName')
         ->and($fetchedEntity->id)->toBe($rawInMemoryEntity->id);
+});
+
+test('it cant construct if not a subclass of Model or ProvidesEntity', function () {
+    new class extends BaseRepository
+    {
+        protected string $for = \stdClass::class;
+    };
+})->throws(\LogicException::class, 'Repository for stdClass must be an Eloquent model');
+
+test('it cant construct if not a subclass of ProvidesEntity', function () {
+    new class extends BaseRepository
+    {
+        protected string $for = ModelWithoutProvidesEntity::class;
+    };
+})->throws(\LogicException::class, 'ModelWithoutProvidesEntity must implement ProvidesEntity');
+
+test('it returns null ONLY for quarantined entities when $nullIfQuarantined is true', function () {
+    $model = ModelWithQuarantine::create(['name' => 'short']); // violates invariant, will be quarantined
+    $properModel = ModelWithQuarantine::create(['name' => 'ValidName']); // valid data
+    $repository = new class extends BaseRepository
+    {
+        protected string $for = ModelWithQuarantine::class;
+    };
+
+    $entity = $repository->find($model->id, nullIfQuarantined: true);
+    $properEntity = $repository->find($properModel->id, nullIfQuarantined: true);
+
+    expect($entity)->toBeNull();
+    expect($properEntity)->not()->toBeNull()
+        ->and($properEntity->name)->toBe('ValidName');
+});
+
+test('withQuarantine returns all entities, including quarantined ones', function () {
+    ModelWithQuarantine::whereNotNull('id')->delete();
+    ModelWithQuarantine::create(['name' => 'short']); // violates invariant, will be quarantined
+    ModelWithQuarantine::create(['name' => 'ValidName']); // valid data
+    $repository = new class extends BaseRepository
+    {
+        protected string $for = ModelWithQuarantine::class;
+    };
+
+    $entities = $repository->all();
+
+    expect($entities)->toBeArray()
+        ->and($entities)->toHaveCount(1); // Only the valid entity is returned
+
+    $allEntities = $repository->withQuarantined();
+
+    expect($allEntities)->toBeArray()
+        ->and($allEntities)->toHaveCount(2); // Both valid and quarantined entities are returned
 });

@@ -111,6 +111,16 @@ class Invariant
         }
     }
 
+    public function getIgnored(): array
+    {
+        return $this->ignored;
+    }
+
+    public function setIgnored(array $ignored): void
+    {
+        $this->ignored = $ignored;
+    }
+
     private function handleViolation(?EnforcesInvariants $subject = null): void
     {
         try {
@@ -134,7 +144,10 @@ class Invariant
         }
 
         foreach ($this->touches as $property) {
-            if (property_exists($subject, $property)) {
+            // A real declared property, or an attribute exposed through a magic
+            // __set (Eloquent models, proxies) — property_exists() alone is false
+            // for the latter even though the write succeeds.
+            if (property_exists($subject, $property) || method_exists($subject, '__set')) {
                 $subject->{$property} = $this->default;
             } else {
                 throw new \RuntimeException("Property {$property} does not exist on the subject.");
@@ -155,8 +168,6 @@ class Invariant
             throw new \RuntimeException('Quarantine policy requires a subject implementing EnforcesInvariants.');
         }
 
-        $subject instanceof EnforcesInvariants
-            ? $subject->quarantine($this->message)
-            : throw new \RuntimeException('Quarantine needs a subject implementing EnforcesInvariants.');
+        $subject->quarantine($this->message);
     }
 }

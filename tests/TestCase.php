@@ -77,5 +77,11 @@ abstract class TestCase extends BaseTestCase
             $table->string('name');
             $table->timestamps();
         });
+
+        Capsule::schema()->create('model_with_autocorrects', function ($table) {
+            $table->increments('id');
+            $table->string('name');
+            $table->timestamps();
+        });
     }
 }

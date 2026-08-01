@@ -78,10 +78,7 @@ class BaseRepository
     {
         $model = $entity->toModel();
 
-        if (! $model instanceof Model) {
-            $class = $entity::class;
-            throw new \LogicException("Entity {$class} must return an Eloquent model from toModel()");
-        }
+        // TypeErrors will prevent from ever getting anything but an eloquent model here
 
         $model->save();
     }
