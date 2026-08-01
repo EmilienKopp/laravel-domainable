@@ -1,13 +1,22 @@
-# Laravel Entity Model
+# Laravel Domainable
+
+[![Tests](https://github.com/EmilienKopp/laravel-domainable/actions/workflows/tests.yml/badge.svg)](https://github.com/EmilienKopp/laravel-domainable/actions/workflows/tests.yml)
+[![Latest Version](https://img.shields.io/packagist/v/splitstack/laravel-domainable.svg)](https://packagist.org/packages/splitstack/laravel-domainable)
+[![Total Downloads](https://img.shields.io/packagist/dt/splitstack/laravel-domainable.svg)](https://packagist.org/packages/splitstack/laravel-domainable)
+[![PHP Version](https://img.shields.io/packagist/php-v/splitstack/laravel-domainable.svg)](https://packagist.org/packages/splitstack/laravel-domainable)
+[![License](https://img.shields.io/packagist/l/splitstack/laravel-domainable.svg)](https://github.com/EmilienKopp/laravel-domainable/blob/main/LICENSE)
 
 **Pragma > Dogma.**
 
-Allow to pragmatically adopt DDD principles in Laravel and Eloquent without the overhead of writing and maintaining a separate entity class for each model.
+Adopt DDD principles in Laravel and Eloquent without the overhead of writing and
+maintaining a separate entity class for every model.
 
-This package slightly bends the reality of Dependency Inversion Principle,
-to give that pragmatic edge to your codebase.
+This package slightly bends the reality of the Dependency Inversion Principle to
+give a pragmatic edge to your codebase. You can still write your own aggregate
+root and entity classes when you want to; this is just a convenience for the
+common case of a single model per aggregate.
 
-## The idea
+## What you get
 
 |                       | Plain DDD in Laravel                   | With this package                            |
 | --------------------- | -------------------------------------- | -------------------------------------------- |
@@ -17,16 +26,26 @@ to give that pragmatic edge to your codebase.
 | Infrastructure leaks  | Likely (`save`, `newQuery`, relations) | Can't leak, never exposed                    |
 | Invariants            | Called by hand, easy to forget         | Run automatically after every domain call    |
 
-Of course, you can still write your own aggregate root and entity classes if you'd like.
+The core capabilities, in order:
 
-This package is just a convenience for the common case of a single model per aggregate.
-
-Feel free to use the `IsEntity` trait on your own Domain classes to open the same `Invariants` API.
+- **Domainable** turns a model into a domain-facing **Entity**: read-only
+  attributes plus the methods you opt into, nothing else.
+- **Invariants** are rules that run automatically after every domain call, with
+  policies that decide what a failure does (throw, quarantine, correct, ignore).
+- **Repositories** hydrate entities out of the database and keep infrastructure
+  on their side of the boundary.
+- **Traits** (`Domainable`, `IsEntity`) let you reuse the same machinery on
+  models or on plain custom aggregate roots.
 
 ## Requirements
 
 - PHP 8.4+
 - Laravel 10, 11, 12, or 13
+
+## Disclaimer
+
+This package is in early development (`v0.x`). The API is not stable yet, and breaking
+changes may be made without warning.
 
 ## Installation
 
@@ -36,11 +55,21 @@ composer require splitstack/laravel-domainable
 
 The service provider is auto-discovered.
 
-## Usage
+## What a Domainable is
 
-Add the `Domainable` trait and the `ProvidesEntity` contract to a model. Mark
-domain methods with `#[Domain]`. Declare invariants as methods that return an
-`Invariant` value object.
+A **Domainable** is an Eloquent model that can hand back a domain **Entity**: a
+runtime view of itself that exposes only what the domain is allowed to touch.
+
+The Entity is a proxy over the model. It gives you:
+
+- **Attributes**, read-only, through `__get` (casts and accessors apply).
+- **Methods marked `#[Domain]`**, forwarded to the model. Anything else (`save`,
+  `newQuery`, relations, arbitrary setters) throws `BadMethodCallException`, so
+  infrastructure can't leak into domain code.
+
+You make a model domainable by adding the `Domainable` trait and the
+`ProvidesEntity` contract, marking the domain methods with `#[Domain]`, and
+declaring any invariants (covered in the next section).
 
 ```php
 use Illuminate\Database\Eloquent\Model;
@@ -87,60 +116,39 @@ class Order extends Model implements ProvidesEntity
 }
 ```
 
-Declare a repository for the model. Its `find()` and `all()` return entities, not
-models:
+Call `asEntity()` to cross into the domain view:
 
 ```php
-use Splitstack\Domainable\Repository\BaseRepository;
-
-class OrderRepository extends BaseRepository
-{
-    protected string $for = Order::class;
-}
-```
-
-Then work through the entity it hands back:
-
-```php
-$orders = new OrderRepository();
-
-$order = $orders->find($id); // an Entity, never the raw model
+$order = Order::find($id)->asEntity(); // an Entity, never the raw model
 
 $order->total;             // read-only attribute access
 $order->cancel();          // allowed: marked #[Domain]. Invariants run after.
 $order->applyDiscount(50); // fluent: returns the entity, never the raw model
 
-$order->save();            // BadMethodCallException: not domain behavior
-$order->newQuery();        // BadMethodCallException: not domain behavior
+$order->save();            // 💥 BadMethodCallException: not domain behavior
+$order->newQuery();        // 💥 BadMethodCallException: not domain behavior
 ```
-
-Quarantined entities (see [Hydration policies](#hydration-policies)) are handled
-by the repository:
-
-```php
-$orders->all();                          // excludes quarantined entities
-$orders->withQuarantined();              // includes them
-$orders->find($id);                      // returns the entity even if quarantined
-$orders->find($id, nullIfQuarantined: true); // null if quarantined
-```
-
-### What the entity exposes
-
-- **Attributes**, read-only, through `__get` (casts and accessors apply).
-- **Methods marked `#[Domain]`**, forwarded to the model. Anything else throws
-  `BadMethodCallException`.
-- **`assertInvariants()`**, to run every invariant on demand (a repository can
-  call it before persisting).
-- **`isQuarantined()`**, true when a `Quarantine`-policy invariant failed.
-- **`toModel()`**, to hand the backing model to the infrastructure layer.
 
 A `#[Domain]` method that returns `$this` on the model gives you back the
-entity, so fluency works without leaking the model.
+entity, so fluency works without ever leaking the model. Two more methods round
+out the surface:
 
-### Invariants
+ℹ️ Nothing prevents you from calling `#[Domain]` methods on the model itself or
+in repository/infra code, but we wouldn't recommend it. The point is that the
+entity mutates itself and the persistence is dumb.
 
-An invariant method takes no arguments and returns an `Invariant` value object
-built with `Invariant::make()`:
+- **`assertInvariants()`** runs every invariant on demand.
+- **`toModel()`** hands the backing model back to the infrastructure layer.
+
+## Invariants
+
+An **invariant** is a rule that must hold for the entity to be valid. Invariants
+run automatically after every domain operation, and `asEntity()` asserts them
+before handing the entity back, so an entity can never escape into your domain in
+a state a strict invariant forbids.
+
+An invariant is a method that takes no arguments and returns an `Invariant`
+value object built with `Invariant::make()`:
 
 - `rule`: a closure returning `true` when the state is valid.
 - `message`: the text surfaced when the rule fails.
@@ -151,16 +159,15 @@ built with `Invariant::make()`:
 - `policy`: a `HydrationPolicy`, default `Strict` (see below).
 - `default`: replacement value used by the `AutoCorrect` policy.
 
-Invariants run automatically after every domain operation. A broken one surfaces
-as a `Splitstack\Domainable\Exceptions\InvariantViolationException` carrying the
-method name as its label.
+A broken invariant under the default policy surfaces as an
+`InvariantViolationException` carrying the method name as its label:
 
 ```php
 $order->applyDiscount(999999);
 // InvariantViolationException: Invariant [totalIsNonNegative] violated: total below zero
 ```
 
-#### Hydration policies
+### Hydration policies
 
 `policy:` decides what a failed invariant does. `Lenient` and `AutoCorrect`
 require `touches`; `AutoCorrect` also requires a `default`.
@@ -183,30 +190,101 @@ return Invariant::make(
 );
 ```
 
-The invariant API is split out of `Domainable` into its own `IsEntity` trait
-(`Domainable` uses it). Attach `IsEntity` and the `EnforcesInvariants` contract to
-any class, no Eloquent needed, to reuse invariants on a custom aggregate root and
-call `assertInvariants()` yourself.
+The `Quarantine` policy is what makes an entity load in an invalid state without
+throwing. `isQuarantined()` reports it, and the repository class decides how to
+treat quarantined entities (see [below](#quarantined-entities)).
+
+### Invariant props
+
+#### `$touches`
+
+Allows to apply the predicate callback to a certain set of attributes.
+
+⚠️ It is required for `Lenient` and `AutoCorrect` policies.
+
+#### `$default`
+
+The replacement value used by the `AutoCorrect` policy.
+
+## Repositories
+
+A **repository** is the hydrate direction: it pulls entities out of the database
+so the rest of your domain code never sees a raw model. Its `find()` and `all()`
+return entities, not models.
+
+Declare one by naming the model it is for:
+
+```php
+use Splitstack\Domainable\Repository\BaseRepository;
+
+class OrderRepository extends BaseRepository
+{
+    protected string $for = Order::class;
+}
+```
+
+Then work through the entities it hands back:
+
+```php
+$orders = new OrderRepository();
+
+$order = $orders->find($id); // an Entity, never the raw model
+$order->cancel();
+
+$all = $orders->all();       // a collection of entities
+```
+
+### Quarantined entities
+
+A **quarantined entity** is one that hydrated in an invalid state (a
+`Quarantine`-policy invariant failed) but that you still want to load, flag, and
+handle rather than reject outright. The repository decides how to treat them:
+
+```php
+$orders->all();                              // excludes quarantined entities
+$orders->withQuarantined();                  // includes them
+$orders->find($id);                          // returns the entity even if quarantined (⚠️if your data is corrupted and does not meet the invariant, this will throw InvariantViolationException)
+$orders->find($id, nullIfQuarantined: true); // null if quarantined
+$orders->find($id, fetchUnsafe: true);       // returns the entity without checking invariants
+
+$orderEntity->isQuarantined();                     // true when a Quarantine-policy invariant failed
+```
+
+`fetchUnsafe: true` is the escape hatch for loading an entity you already know might be
+invalid, so you can inspect or repair it instead of having `find()` throw. It only
+skips the check on hydration.
+
+Any later `#[Domain]` call on that entity **still asserts**,
+so a broken strict invariant surfaces the moment you try to act on it.
+Unlike quarantine, it does not flag the entity (`isQuarantined()` stays `false`)
+and it applies per fetch rather than changing an invariant's policy everywhere.
+
+#### Saving entities
+
+To persist changes, only call `save()` on the repository, not on the entity.
+
+```php
+$orderEntity->save();         // 💥 BadMethodCallException: not domain behavior
+$orders->save($orderEntity);  // ✅ allowed: repository handles persistence
+```
+
+## Using the traits in custom entities
+
+The invariant machinery is split out of `Domainable` into its own `IsEntity`
+trait (which `Domainable` uses). Attach `IsEntity` and the `EnforcesInvariants`
+contract to any class, no Eloquent needed, to reuse invariants on a custom
+aggregate root and call `assertInvariants()` yourself.
 
 ```php
 use Splitstack\Domainable\Concerns\IsEntity;
 use Splitstack\Domainable\Contracts\EnforcesInvariants;
 
-class Cart implements EnforcesInvariants
+class MyAggregateRootOrEntity implements EnforcesInvariants
 {
     use IsEntity;
 
     // ... methods returning Invariant, checked by assertInvariants()
 }
-```
-
-### Persisting
-
-The repository is the hydrate direction. To persist, hand the model back to your
-infrastructure layer with `toModel()`:
-
-```php
-$repository->save($order->toModel());
 ```
 
 ## Type safety
@@ -279,7 +357,6 @@ $order->asEntity()->applyDiscount(50);
 
 expect(fn () => Order::factory()->make(['total' => -1])->asEntity())
     ->toThrow(InvariantViolationException::class);
-
 ```
 
 Only repository tests (find, all) need a real or in-memory sqlite database,
