@@ -178,5 +178,3 @@ test('handleQuarantine throws if subject does not implement EnforcesInvariants',
         policy: HydrationPolicy::Quarantine,
     ), new class {});
 })->throws(\TypeError::class);
-
-test('')

@@ -1,6 +1,7 @@
 # Laravel Domainable
 
 [![Tests](https://github.com/EmilienKopp/laravel-domainable/actions/workflows/tests.yml/badge.svg)](https://github.com/EmilienKopp/laravel-domainable/actions/workflows/tests.yml)
+[![Coverage](https://raw.githubusercontent.com/EmilienKopp/laravel-domainable/main/.github/badges/coverage.svg)](https://github.com/EmilienKopp/laravel-domainable/actions/workflows/tests.yml)
 [![Latest Version](https://img.shields.io/packagist/v/splitstack/laravel-domainable.svg)](https://packagist.org/packages/splitstack/laravel-domainable)
 [![Total Downloads](https://img.shields.io/packagist/dt/splitstack/laravel-domainable.svg)](https://packagist.org/packages/splitstack/laravel-domainable)
 [![PHP Version](https://img.shields.io/packagist/php-v/splitstack/laravel-domainable.svg)](https://packagist.org/packages/splitstack/laravel-domainable)
