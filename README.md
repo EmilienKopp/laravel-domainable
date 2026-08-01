@@ -31,7 +31,7 @@ Feel free to use the `IsEntity` trait on your own Domain classes to open the sam
 ## Installation
 
 ```bash
-composer require splitstack/laravel-entity-model
+composer require splitstack/laravel-domainable
 ```
 
 The service provider is auto-discovered.
