@@ -23,10 +23,10 @@ trait Domainable
 
     /**
      * @param  bool  $assertInvariants  when false, skip the invariant check on
-     *                                   hydration. The escape hatch for loading
-     *                                   an entity known to be in an invalid
-     *                                   state (inspection, repair). Later domain
-     *                                   calls still assert.
+     *                                  hydration. The escape hatch for loading
+     *                                  an entity known to be in an invalid
+     *                                  state (inspection, repair). Later domain
+     *                                  calls still assert.
      */
     public function asEntity(bool $assertInvariants = true): Entity
     {
