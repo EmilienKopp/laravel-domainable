@@ -1,0 +1,49 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Trait Splitstack\\Domainable\\Concerns\\Domainable is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: src/Concerns/Domainable.php
+
+		-
+			message: '#^Trait Splitstack\\Domainable\\Concerns\\IsEntity is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: src/Concerns/IsEntity.php
+
+		-
+			message: '#^Instanceof between Splitstack\\Domainable\\Contracts\\EnforcesInvariants and Splitstack\\Domainable\\Contracts\\EnforcesInvariants will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Data/Invariant.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model&Splitstack\\Domainable\\Contracts\\ProvidesEntity\:\:create\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Entity.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model&Splitstack\\Domainable\\Contracts\\ProvidesEntity\:\:find\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Repository/BaseRepository.php
+
+		-
+			message: '#^Instanceof between Illuminate\\Database\\Eloquent\\Model and Illuminate\\Database\\Eloquent\\Model will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Repository/BaseRepository.php
+
+		-
+			message: '#^PHPDoc tag @var has invalid value \(Model&ProvidesEntity\|null \$model\)\: Unexpected token "\|", expected TOKEN_OTHER at offset 29 on line 1$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: src/Repository/BaseRepository.php
+
+		-
+			message: '#^Variable \$model in PHPDoc tag @var does not exist\.$#'
+			identifier: varTag.variableNotFound
+			count: 1
+			path: src/Repository/BaseRepository.php

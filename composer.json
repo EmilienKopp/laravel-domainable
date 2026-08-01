@@ -1,0 +1,62 @@
+{
+  "name": "splitstack/laravel-domainable",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Splitstack\\Domainable\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Splitstack\\Domainable\\DomainableServiceProvider"
+      ]
+    }
+  },
+  "scripts": {
+    "lint": "vendor/bin/pint --parallel",
+    "type": "vendor/bin/phpstan analyse --memory-limit=2G",
+    "test": "vendor/bin/pest --parallel --colors=always"
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Splitstack\\Domainable\\Tests\\": "tests/"
+    }
+  },
+  "authors": [
+    {
+      "name": "EmilienKopp",
+      "email": "emilien.kopp@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "^8.4",
+    "illuminate/bus": "^10.0|^11.0|^12.0|^13.0",
+    "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
+    "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
+    "illuminate/database": "^10.0|^11.0|^12.0|^13.0",
+    "illuminate/events": "^10.0|^11.0|^12.0|^13.0",
+    "illuminate/pipeline": "^10.0|^11.0|^12.0|^13.0",
+    "illuminate/queue": "^10.0|^11.0|^12.0|^13.0",
+    "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+    "illuminate/validation": "^10.0|^11.0|^12.0|^13.0",
+    "splitstack/readonly-models": "^0.1"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^11.0",
+    "phpunit/phpunit": "^13.2",
+    "phpstan/phpstan": "^2.2",
+    "rector/rector": "^2.5",
+    "pestphp/pest": "^5.0",
+    "pestphp/pest-plugin-type-coverage": "^5.0",
+    "pestphp/pest-plugin-phpstan": "^5.0",
+    "pestphp/pest-plugin-drift": "^5.0",
+    "laravel/pint": "^1.30"
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  }
+}
