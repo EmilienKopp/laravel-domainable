@@ -3,11 +3,13 @@
 namespace Splitstack\Domainable;
 
 use BadMethodCallException;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
+use JsonSerializable;
 use Splitstack\Domainable\Contracts\EnforcesInvariants;
 use Splitstack\Domainable\Contracts\ProvidesEntity;
 
-final class Entity implements EnforcesInvariants
+final class Entity implements Arrayable, EnforcesInvariants, JsonSerializable
 {
     private const ALLOWED_METHODS = ['clone'];
 
@@ -68,5 +70,15 @@ final class Entity implements EnforcesInvariants
     public function toModel(): Model
     {
         return $this->model;
+    }
+
+    public function toArray(): array
+    {
+        return $this->model->toArray();
+    }
+
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }
