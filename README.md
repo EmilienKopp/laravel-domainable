@@ -152,7 +152,7 @@ An invariant is a method that takes no arguments and returns an `Invariant`
 value object built with `Invariant::make()`:
 
 - `rule`: a closure returning `true` when the state is valid.
-- `message`: the text surfaced when the rule fails.
+- `message`: the text surfaced when `$rule` fails.
 - `touches`: optional attribute names to check the rule against. Without it, the
   rule takes no arguments and reads `$this` (`fn () => $this->total >= 0`). With
   it, the rule receives each named attribute's value and must hold for all of
@@ -197,15 +197,50 @@ treat quarantined entities (see [below](#quarantined-entities)).
 
 ### Invariant props
 
+#### `$rule`
+
+The predicate closure that checks the invariant. It must return `true` when the
+state is valid.
+
+The closure can work in two ways:
+
+- Don't use `$touches` (see below): the closure takes no arguments, you just thread the Entity's state through `$this`
+- Use `$touches`: the closure receives each named attribute's value and must hold for all of them
+
 #### `$touches`
 
-Allows to apply the predicate callback to a certain set of attributes.
+Allows to apply the predicate callback to a certain set of attributes,
+and to check the `$rule` against several variables.
+Useful when the same rule applies to multiple attributes.
 
 ⚠️ It is required for `Lenient` and `AutoCorrect` policies.
 
 #### `$default`
 
 The replacement value used by the `AutoCorrect` policy.
+
+#### Examples
+
+```php
+Invariant::make(
+    rule: fn () => $this->total >= 0, // the entity's `total` attribute
+    message: 'total below zero',
+);
+
+Invariant::make(
+    rule: fn ($value) => $value >= 0, // the `total` and `subtotal` attribute's values
+    message: 'totals below zero',
+    touches: ['total'],
+    default: 0,
+    policy: HydrationPolicy::AutoCorrect, // the `total` attribute is corrected to 0 if the invariant fails
+);
+
+Invariant::make(
+    touches: ['first_name','last_name'],
+    rule: fn ($value) => strlen($value) >= 3, // the `first_name` and `last_name` attribute's values are checked
+    message: 'names cannot be too short',
+);
+```
 
 ## Repositories
 
