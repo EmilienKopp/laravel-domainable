@@ -6,15 +6,6 @@ use Splitstack\Domainable\Tests\Fixtures\ExampleModel;
 use Splitstack\Domainable\Tests\Fixtures\ProxyOnlyModel;
 
 /**
- * These are not assertions about wall-clock time (that would flake on CI). They
- * seed a realistic dataset, time the entity path against the raw-model path, and
- * print the breakdown so you can eyeball whether assertInvariants() or the proxy
- * dispatch add any consistent overhead.
- *
- * Run with: composer bench
- */
-
-/**
  * Best-of-N timer. Takes the fastest round to cut GC / scheduler noise.
  */
 function bench(callable $fn, int $rounds = 5): float

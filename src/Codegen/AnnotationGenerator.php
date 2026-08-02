@@ -7,11 +7,8 @@ use ReflectionClass;
 use Splitstack\Domainable\Entity;
 
 /**
- * Option B: annotate the model in place, ide-helper style.
- *
  * Adds a marker-tagged docblock above the class with @property-read for the
- * model's attributes and a typed @method asEntity(). No new type to wire; run
- * it again any time and the marked block is replaced, not duplicated.
+ * model's attributes and a typed @method asEntity().
  */
 final class AnnotationGenerator
 {

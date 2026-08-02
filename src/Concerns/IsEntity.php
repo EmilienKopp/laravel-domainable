@@ -7,12 +7,6 @@ use Splitstack\Domainable\Exceptions\InvariantViolationException;
 use Splitstack\Domainable\Support\EntityReflector;
 
 /**
- * Give any class self-enforcing domain invariants.
- *
- * Declare invariants as methods returning an Invariant value object; they are
- * detected by return type. Attach this to a custom aggregate root to reuse the
- * invariant API without the entity projection. No Eloquent dependency.
- *
  * @phpstan-require-implements EnforcesInvariants
  */
 trait IsEntity

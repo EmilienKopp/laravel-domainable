@@ -10,9 +10,6 @@ use Splitstack\Domainable\Support\EntityReflector;
 /**
  * Give an Eloquent model a domain-facing entity view.
  *
- * Pulls in IsEntity so the model also enforces its own invariants. Calling
- * asEntity() asserts invariants before handing back the entity.
- *
  * @phpstan-require-extends Model
  *
  * @phpstan-require-implements ProvidesEntity
@@ -23,10 +20,7 @@ trait Domainable
 
     /**
      * @param  bool  $assertInvariants  when false, skip the invariant check on
-     *                                  hydration. The escape hatch for loading
-     *                                  an entity known to be in an invalid
-     *                                  state (inspection, repair). Later domain
-     *                                  calls still assert.
+     *                                  hydration.
      */
     public function asEntity(bool $assertInvariants = true): Entity
     {

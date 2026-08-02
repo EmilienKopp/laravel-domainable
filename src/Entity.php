@@ -11,7 +11,7 @@ use Splitstack\Domainable\Contracts\ProvidesEntity;
 
 final class Entity implements Arrayable, EnforcesInvariants, JsonSerializable
 {
-    private const ALLOWED_METHODS = ['clone'];
+    private const ALLOWED_METHODS = ['clone', 'toArray'];
 
     /**
      * @param  list<string>  $domain  method names exposed as domain behavior

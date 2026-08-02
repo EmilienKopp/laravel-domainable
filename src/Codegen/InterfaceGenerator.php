@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use ReflectionClass;
 
 /**
- * Option C: generate a per-aggregate domain interface from a model.
+ * Generate a per-aggregate domain interface from a model.
  *
  * The interface is the opt-in type-safe contract. Have the model implement it
  * so static analysis checks the #[Domain] methods really exist, and type
