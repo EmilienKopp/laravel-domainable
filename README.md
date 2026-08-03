@@ -123,7 +123,7 @@ Call `asEntity()` to cross into the domain view:
 $order = Order::find($id)->asEntity(); // an Entity, never the raw model
 
 $order->total;             // read-only attribute access
-$order->cancel();          // allowed: marked #[Domain]. Invariants run after.
+$order->cancel();          // allowed: marked #[Domain]. Invariants run after automatically after the call.
 $order->applyDiscount(50); // fluent: returns the entity, never the raw model
 
 $order->save();            // 💥 BadMethodCallException: not domain behavior
@@ -131,15 +131,16 @@ $order->newQuery();        // 💥 BadMethodCallException: not domain behavior
 ```
 
 A `#[Domain]` method that returns `$this` on the model gives you back the
-entity, so fluency works without ever leaking the model. Two more methods round
-out the surface:
+entity, so fluency works without ever leaking the model.
 
 ℹ️ Nothing prevents you from calling `#[Domain]` methods on the model itself or
 in repository/infra code, but we wouldn't recommend it. The point is that the
 entity mutates itself and the persistence is dumb.
 
+Two more methods round out the surface:
+
 - **`assertInvariants()`** runs every invariant on demand.
-- **`toModel()`** hands the backing model back to the infrastructure layer.
+- **`toModel()`** hands the backing model back.
 
 ## Invariants
 
@@ -148,7 +149,7 @@ run automatically after every domain operation, and `asEntity()` asserts them
 before handing the entity back, so an entity can never escape into your domain in
 a state a strict invariant forbids.
 
-An invariant is a method that takes no arguments and returns an `Invariant`
+An invariant is a method that returns a `Splitstack\Domainable\Data\Invariant`
 value object built with `Invariant::make()`:
 
 - `rule`: a closure returning `true` when the state is valid.
@@ -164,8 +165,29 @@ A broken invariant under the default policy surfaces as an
 `InvariantViolationException` carrying the method name as its label:
 
 ```php
+class Order extends Model implements ProvidesEntity
+{
+    use Domainable;
+
+    #[Domain]
+    public function applyDiscount(int $amount): static
+    {
+        $this->total -= $amount;
+
+        return $this;
+    }
+
+    protected function totalIsNonNegative(): Invariant
+    {
+        return Invariant::make(
+            rule: fn () => $this->total >= 0,
+            message: 'total below zero',
+        );
+    }
+}
+
 $order->applyDiscount(999999);
-// InvariantViolationException: Invariant [totalIsNonNegative] violated: total below zero
+// 💥InvariantViolationException: Invariant [totalIsNonNegative] violated: total below zero
 ```
 
 ### Hydration policies
@@ -228,9 +250,9 @@ Invariant::make(
 );
 
 Invariant::make(
-    rule: fn ($value) => $value >= 0, // the `total` and `subtotal` attribute's values
-    message: 'totals below zero',
     touches: ['total'],
+    rule: fn ($value) => $value >= 0, // the `total` attribute's values
+    message: 'totals below zero',
     default: 0,
     policy: HydrationPolicy::AutoCorrect, // the `total` attribute is corrected to 0 if the invariant fails
 );
@@ -245,7 +267,7 @@ Invariant::make(
 ## Repositories
 
 A **repository** is the hydrate direction: it pulls entities out of the database
-so the rest of your domain code never sees a raw model. Its `find()` and `all()`
+so the rest of your domain code never sees a raw model. Its pre-existing `find()` and `all()`
 return entities, not models.
 
 Declare one by naming the model it is for:
@@ -270,6 +292,18 @@ $order->cancel();
 $all = $orders->all();       // a collection of entities
 ```
 
+You can also call `asEntity()` in a pre-existing repository.
+
+```php
+class MyRepository // Pre existing, does not extend BaseRepository
+{
+    public function find($id): \Splitstack\Domainable\Entity
+    {
+        return Order::find($id)->asEntity();
+    }
+}
+```
+
 ### Quarantined entities
 
 A **quarantined entity** is one that hydrated in an invalid state (a
@@ -279,18 +313,20 @@ handle rather than reject outright. The repository decides how to treat them:
 ```php
 $orders->all();                              // excludes quarantined entities
 $orders->withQuarantined();                  // includes them
-$orders->find($id);                          // returns the entity even if quarantined (⚠️if your data is corrupted and does not meet the invariant, this will throw InvariantViolationException)
+$orders->find($id);                          // returns the entity even if quarantined (if HydrationPolicy::Quarantine)
 $orders->find($id, nullIfQuarantined: true); // null if quarantined
 $orders->find($id, fetchUnsafe: true);       // returns the entity without checking invariants
 
 $orderEntity->isQuarantined();                     // true when a Quarantine-policy invariant failed
 ```
 
+`find()`, `all()`, and `withQuarantined()` already exist on the BaseRepository.
+
 `fetchUnsafe: true` is the escape hatch for loading an entity you already know might be
 invalid, so you can inspect or repair it instead of having `find()` throw. It only
-skips the check on hydration.
+skips the check on hydration (will work even if HydrationPolicy is not `Quarantine`).
 
-Any later `#[Domain]` call on that entity **still asserts**,
+Any later `#[Domain]` call on an entity loaded with `fetchUnsafe: true` **still asserts**,
 so a broken strict invariant surfaces the moment you try to act on it.
 Unlike quarantine, it does not flag the entity (`isQuarantined()` stays `false`)
 and it applies per fetch rather than changing an invariant's policy everywhere.
